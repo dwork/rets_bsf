@@ -1,0 +1,27 @@
+name = OIP RETS IMPORT Module
+description = "Import adds, changes and cancels from RETS BSF feed."
+core = 7.x
+package = OIP
+configure = admin/config/system/rets_bsf
+
+; Module file - contains configuration parameters and call to cron & other modules for processing
+files[] = rets_bsf.module
+
+; Interface BSF file to production database, members only
+files[] = rets_bsf.interface.inc
+
+; Shared routines - email, open databases, etc
+files[] = rets_bsf.includes.inc
+
+; After interface is complete, this routine deletes any non-member listings
+files[] = rets_bsf.cleanup.inc
+
+; This routine sets the "Featured Listing" rotation flag in all listings
+files[] = rets_bsf.rotate.inc
+
+; Information added by drupal.org packaging script on 2011-09-08
+version = "7.x-1.0-beta1"
+core = "7.x"
+project = "rets_bsf"
+datestamp = "1315505820"
+

@@ -1,0 +1,22 @@
+<?php
+
+/**
+ * @file
+ * The installation instructions for the OIP RETS BSF Support.
+ */
+
+/**
+ * Implementation of hook_install().
+ */
+ function rets_bsf_install() {
+ }
+/**
+ * @file
+ */
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function rets_bsf_uninstall() {
+}  //  End of rets_bsf_uninstall
+

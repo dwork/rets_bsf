@@ -1,0 +1,19 @@
+OIP Integration module - import RETS BSF feed into Drupal 7.x database
+Content type: LISTING
+
+REQUIREMENTS
+------------
+* RETS FEED
+
+INSTALLATION INSTRUCTIONS
+-------------------------
+1.  Copy the files included in the tarball into a directory named "oip" in
+    your Drupal sites/all/modules/ directory.
+2.  Login as site administrator.
+3.  Enable the OIP support module on the Administer -> Site
+    building -> Modules page.
+4.  Fill in required settings on the Administer -> Site configuration -> OIP
+5.  Enjoy.
+
+NOTES
+-----
