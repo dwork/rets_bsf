@@ -17,37 +17,63 @@ function rets_bsf_interface() {
 
   $count = 0;
 
+  // If select, retrieve users with agentid's
+   $interface = variable_get('rets_bsf_interface');
+   $selectagent='';
+   if ($interface <> 'All') {
+      rets_bsf_msg ($selectagent);
+      $users = entity_load('user');
+      foreach ($users as $user) {
+         if (!empty($user->field_agentid['und']['0']['safe_value'])) {
+            if (strlen($selectagent)<>0) {
+               $selectagent = $selectagent.',';
+            }
+            $selectagent = $selectagent . $user->field_agentid['und'][0]['safe_value'];
+         }
+      }
+   }
+
   // Now, process the records in the "bsf_current" file
   $select = 'SELECT * FROM bsf_current';
+  if ($interface <> 'All') {
+     $select = $select . ' WHERE ListAgentID in (' . $selectagent . ') OR CoListAgentID in (' . $selectagent . ')';
+  }
+
   $query = mysql_query($select);
   $num = mysql_num_rows($query);
   
+  rets_bsf_msg($select . ': recs ' . $num);
+
   while ($row = mysql_fetch_array($query)) {
  
-     // Check to see if one or more of the INPUT agents are OIP members
-     $IsMember = rets_bsf_ismember ($roles, $row['ListAgentID'], $row['ListOfficeID'], $row['CoListAgentID'], $row['CoListOfficeID']);
+     // Bypass the checking section if we're specific
+     if ($interface == 'All') {
 
-     // if not a member, loop. Cleanup is performed elsewhere
-     if ($IsMember == 'No') {
-       continue;
+        // Check to see if one or more of the INPUT agents are OIP members
+        $IsMember = rets_bsf_ismember ($roles, $row['ListAgentID'], $row['ListOfficeID'], $row['CoListAgentID'], $row['CoListOfficeID']);
+
+        // if not a member, loop. Cleanup is performed elsewhere
+        if ($IsMember == 'No') {
+          continue;
+        }
+
+        $row['ListAgentID'] = $IsMember['ListAgentID'];
+        $row['ListOfficeID'] = $IsMember['ListOfficeID'];
+        $row['CoListAgentID'] = $IsMember['CoListAgentID'];
+        $row['CoListOfficeID'] = $IsMember['CoListOfficeID'];
+
+        // Set the owner of this listing to the first agent who is Gold or Platinum
+        $editable = array ('Gold','Platinum');
+        $owneruid = 1;							// Admin
+        $ownername = 'admin';
+        if (in_array($IsMember['ListAgentType'],$editable)) {
+   	   $owneruid = $IsMember['ListAgentUID'];
+           $ownername = $IsMember['ListAgentID'];
+        } else if (in_array($IsMember['CoListAgentType'],$editable)) {
+	   $owneruid = $IsMember['CoListAgentUID'];
+           $ownername = $IsMember['CoListAgentID'];
+        } 
      }
-
-     $row['ListAgentID'] = $IsMember['ListAgentID'];
-     $row['ListOfficeID'] = $IsMember['ListOfficeID'];
-     $row['CoListAgentID'] = $IsMember['CoListAgentID'];
-     $row['CoListOfficeID'] = $IsMember['CoListOfficeID'];
-
-     // Set the owner of this listing to the first agent who is Gold or Platinum
-     $editable = array ('Gold','Platinum');
-     $owneruid = 1;							// Admin
-     $ownername = 'admin';
-     if (in_array($IsMember['ListAgentType'],$editable)) {
-	$owneruid = $IsMember['ListAgentUID'];
-        $ownername = $IsMember['ListAgentID'];
-     } else if (in_array($IsMember['CoListAgentType'],$editable)) {
-	$owneruid = $IsMember['CoListAgentUID'];
-        $ownername = $IsMember['CoListAgentID'];
-     } 
 
      $count++;
 
@@ -73,8 +99,10 @@ function rets_bsf_interface() {
 	
         // Loop through each Drupal map field for the values we're translating
 	$change = '';
-        if ($node->uid <> $owneruid) {		// ownership changed
-          $change .= "Owner changed to $ownername";
+        if ($interface == 'All') {
+           if ($node->uid <> $owneruid) {		// ownership changed
+              $change .= "Owner changed to $ownername";
+           }
         }
 
 	foreach ($map as $key => $value) {
@@ -159,7 +187,9 @@ function rets_bsf_interface() {
 
       	// update or add the node now
       	$node = node_submit($node);
-        $node->uid = $owneruid;			// this goes here, because node_submit changes the owner back to 1 ("admin")
+        if ($interface == 'All') {
+           $node->uid = $owneruid;			// this goes here, because node_submit changes the owner back to 1 ("admin")
+        }
       	if ($node->validated) {
        	  node_save($node);
         }

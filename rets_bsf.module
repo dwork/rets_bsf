@@ -96,6 +96,23 @@ function rets_bsf_form($form, &$form_state) {
       60*60*24 => t('1 day'),
     ),
   );
+
+  // Only the superuser can change this mode
+  global $user;
+  $usernode = user_load($user->uid);
+  if ($user->uid == 1) {
+    $form['configuration']['rets_bsf_interface'] = array(
+    '#type' => 'select',
+    '#title' => t('Retrieve'),
+    '#description' => t('Retrieve ALL or specific Realtor listings. Only the superuser (admin) can change this value.'),
+    '#default_value' => variable_get('rets_bsf_interface'),
+    '#options' => array(
+      'All' => t('All'),
+      'Specific' => t('Specific'),
+      ),
+    );
+  }
+
   $form['hotsheet'] = array(
     '#type' => 'fieldset',
     '#title' => t('Configuration of hotsheet()'),
@@ -193,7 +210,9 @@ function rets_bsf_cron() {
     rets_bsf_interface();
 
     // now, cleanup any straggling issues -- e.g. delete non-member listings
-    rets_bsf_cleanup();
+    if ($interface == 'All') {
+       rets_bsf_cleanup();
+    }
 
     // Next, set the rotation on member listings for the Feature
     rets_bsf_rotate();
