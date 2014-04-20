@@ -258,6 +258,7 @@ global $user;  // place at the top of the function you are calling from
 
   // Get the hotsheet variables set in rets_bsf.module
   $sendemail = variable_get('rets_bsf_sendhotsheet');
+  $subject = '';
 
   if ($sendemail == 'Yes') {
 

@@ -210,6 +210,8 @@ function rets_bsf_cron() {
     rets_bsf_interface();
 
     // now, cleanup any straggling issues -- e.g. delete non-member listings
+
+    $interface = variable_get('rets_bsf_interface'),
     if ($interface == 'All') {
        rets_bsf_cleanup();
     }
