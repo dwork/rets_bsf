@@ -40,7 +40,7 @@ function rets_bsf_interface() {
   }
 
   $result = mysqli->query($select);
-  $num = mysql_numi_rows->$result;
+  $num = mysqli_num_rows->$result;
   
   rets_bsf_msg($select . ': recs ' . $num);
 
