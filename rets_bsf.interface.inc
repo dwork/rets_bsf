@@ -39,12 +39,12 @@ function rets_bsf_interface() {
      $select = $select . ' WHERE ListAgentID in (' . $selectagent . ') OR CoListAgentID in (' . $selectagent . ')';
   }
 
-  $result = mysqli->query($select);
-  $num = mysqli_num_rows->$result;
+  $result = mysql_query($select);
+  $num = mysql_num_rows($result);
   
   rets_bsf_msg($select . ': recs ' . $num);
 
-  while ($row = mysqli_fetch_array->$result)) {
+  while ($row = mysql_fetch_array($result)) {
  
      // Bypass the checking section if we're specific
      if ($interface == 'All') {
