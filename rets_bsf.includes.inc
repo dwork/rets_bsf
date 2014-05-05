@@ -172,32 +172,31 @@ function rets_bsf_loadroles () {
 
 function rets_bsf_openrets ($map) {
 
+  global $mysqli_link;
+
   // Open the rets database
   $host = "athena.earthclick.net";
   $user = "rmls";
   $pw = "me5Y#2#3";
   $db = "rets";
 
-  $mysql_access = mysql_connect($host, $user, $pw);
-  if(!$mysql_access) {
-     rets_bsf_msg ("Database $db not connected");
-  }
-
-  $con = mysql_select_db($db, $mysql_access);
-  if (!$con) {
-     rets_bsf_msg ("Can't use connection to $db");
+  $mysqli_link = mysqli_connect($host, $user, $pw, $db);
+  if(mysqli_connect_error()) {
+     $msg = mysqli_connect_error();
+     rets_bsf_msg("Connect failed: $msg");
   }
 
   // Read in "rets_map" and load the $map array
   $select = 'SELECT * FROM bsf_map WHERE fieldoutvalue<>""';
-  $query = mysql_query($select);
-  while ($row = mysql_fetch_array($query)) {
+  $result = mysqli_query($mysqli_link,$select);
+  while ($row = mysqli_fetch_array($result)) {
     $fld = chop($row['fieldinvalue']);
     $map[$fld]['out'] = chop($row['fieldoutvalue']);
     $map[$fld]['type'] = $row['fieldtype'];
     $map[$fld]['oiptable'] = $row['oiptable'];
     $map[$fld]['oipfield'] = $row['oipfield'];
   }
+  mysqli_free_result($result);
   return $map;
 }
 
@@ -265,9 +264,6 @@ global $user;  // place at the top of the function you are calling from
 	$to = variable_get('rets_bsf_emailto');
  	$from = variable_get('rets_bsf_emailfrom');
 	$subject = variable_get('rets_bsf_emailsubject','Hotsheet');
-
-	$to = 'dwork@oip.net';
-	$from = 'admin@oip.net';
 
   	// ... other function code would be here
 

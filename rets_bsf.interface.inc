@@ -6,11 +6,13 @@
  */
 
 function rets_bsf_interface() {
+  
+  global $mysqli_link;
 
   $roles = rets_bsf_loadroles();		// $roles[$role] = 1 means its a member
 
   $map = array();
-  $map = rets_bsf_openrets($map);
+  $map = rets_bsf_openrets($map);               // Uses global $mysqli_link as resource
   $adds = 0;
   $updates = 0;
   $changes = '';
@@ -28,7 +30,7 @@ function rets_bsf_interface() {
             if (strlen($selectagent)<>0) {
                $selectagent = $selectagent.',';
             }
-            $selectagent = $selectagent . $user->field_agentid['und'][0]['safe_value'];
+            $selectagent = $selectagent . "'" . $user->field_agentid['und'][0]['safe_value'] . "'";
          }
       }
    }
@@ -39,12 +41,16 @@ function rets_bsf_interface() {
      $select = $select . ' WHERE ListAgentID in (' . $selectagent . ') OR CoListAgentID in (' . $selectagent . ')';
   }
 
-  $result = mysql_query($select);
-  $num = mysql_num_rows($result);
+  if ($result = mysqli_query($mysqli_link,$select)) {
+     $num = mysqli_num_rows($result);
+     rets_bsf_msg($select . ': recs ' . $num);
+  } else {
+     $num = 0;
+     rets_bsf_msg($select . ': no records found');
+  }
   
-  rets_bsf_msg($select . ': recs ' . $num);
 
-  while ($row = mysql_fetch_array($result)) {
+  while ($row = mysqli_fetch_array($result)) {
  
      // Bypass the checking section if we're specific
      if ($interface == 'All') {
@@ -134,10 +140,8 @@ function rets_bsf_interface() {
               }
             }
 	  } else if (strlen($row[$key])<>0 && $row[$key]<>'0000-00-00 00:00:00') {
-              $change .= $key. ': ( -new- ) -> ('. $row[$key] .')';
-	      if (strlen($row[$key]) <> 0 && $row[$key] <> '0000-00-00 00:00:00') {       // no input row or datetime is empty - delete the node variable
-                $node->{$out}['und'][0][$type] = $row[$key];
-	      }
+              $change .= $key. ': ( -new:' .$out."['und'][0][".$type . '] ) -> ('. $row[$key] .')';
+              $node->{$out}['und'][0][$type] = $row[$key];
           }
 	}
 	if (strlen($change)<>0) {
@@ -220,7 +224,7 @@ function rets_bsf_prefix ($row) {
 
   // Also, based on status, clear the unwanted dates
   $row['DateOffMarket'] = substr($row['DateOffMarket'],0,11) . '00:00:00';
-  $row['DateExpiration'] = substr($row['DateExpiration'],0,11) . '00:00:00';
+  // $row['DateExpiration'] = substr($row['DateExpiration'],0,11) . '00:00:00';
   switch ($row['ListingStatus']) {
      case 'Expired':
     	$row['DateCanceled'] = '';
@@ -344,11 +348,9 @@ global $changes;
        unset($node->field_solddate);
        break;
      case ('Canceled'):
-       unset($node->field_expiredate);
        unset($node->field_solddate);
        break;
      case ('Withdrawn'):
-       unset($node->field_expiredate);
        unset($node->field_solddate);
        break;
      case ('SOLD'): 
