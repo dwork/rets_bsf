@@ -203,8 +203,8 @@ function rets_bsf_interface() {
 
   // Finish up - send hotsheet email if configurted, and return message if running interactively
   $msg = $changes . "RETS BSF interface successful: $adds adds, $updates updates";
-  rets_bsf_hotsheet ($msg);
   rets_bsf_msg ($msg);
+  rets_bsf_hotsheet ($msg);
 }
 
 /**----------------------------------------------------------------------------------- 
@@ -224,7 +224,6 @@ function rets_bsf_prefix ($row) {
 
   // Also, based on status, clear the unwanted dates
   $row['DateOffMarket'] = substr($row['DateOffMarket'],0,11) . '00:00:00';
-  // $row['DateExpiration'] = substr($row['DateExpiration'],0,11) . '00:00:00';
   switch ($row['ListingStatus']) {
      case 'Expired':
     	$row['DateCanceled'] = '';
@@ -250,12 +249,14 @@ function rets_bsf_prefix ($row) {
     	$row['DateCanceled'] = '';
     	$row['DateWithdrawn'] = '';
     	$row['DateClose'] = '';
+    	$row['DateOffMarket'] = '';
 	break;
 
      case 'Pending':
     	$row['DateCanceled'] = '';
     	$row['DateWithdrawn'] = '';
     	$row['DateClose'] = '';
+    	$row['DateOffMarket'] = '';
 	break;
   }
 
@@ -343,7 +344,7 @@ global $changes;
 			unset($node->field_offmarketdate);
 		}
 	}
-   	switch ($node->field_status['und'][0]['value']) {
+     switch ($node->field_status['und'][0]['value']) {
      case ('Expired'):
        unset($node->field_solddate);
        break;
@@ -359,10 +360,12 @@ global $changes;
      case ('Active'):
        unset($node->field_solddate);
        unset($node->field_withdrawdate);
+       unset($node->field_offmarketdate);
        break;
      case ('Pending'):
        unset($node->field_solddate);
        unset($node->field_withdrawdate);
+       unset($node->field_offmarketdate);
        break;
      default:
        break;

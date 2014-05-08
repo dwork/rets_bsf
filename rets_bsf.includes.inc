@@ -278,7 +278,7 @@ global $user;  // place at the top of the function you are calling from
         $nnode = node_submit($nnode);
         node_save($nnode);
 
-    $rets_bsf_msg ("Email:$sendemail To:$to From:$from Subject:$subject");
+    rets_bsf_msg ("Email:" . $sendemail . " To:" . $to . " From: " . $from . " Subject:" . $subject);
 
   if ($sendemail == 'Yes') {
 
