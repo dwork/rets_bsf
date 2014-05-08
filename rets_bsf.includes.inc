@@ -256,14 +256,32 @@ global $user;  // place at the top of the function you are calling from
   $time = time();
 
   // Get the hotsheet variables set in rets_bsf.module
-  $sendemail = variable_get('rets_bsf_sendhotsheet');
-  $subject = '';
+    $sendemail = variable_get('rets_bsf_sendhotsheet');
+    $to = variable_get('rets_bsf_emailto');
+    $from = variable_get('rets_bsf_emailfrom');
+    $subject = variable_get('rets_bsf_emailsubject','Hotsheet');
+
+   // Append the hotsheet message to the hotsheet file
+        $nnode = new stdClass();
+        $nnode->title = $subject;
+        $nnode->body['und'][0]['value'] = $msg;
+        $nnode->nid = '';                  // add or update, depending on query for 'nid' above^M
+        $nnode->type = 'hotsheet';   // Your specified content type^M
+        $nnode->created = $time;
+        $nnode->changed = $time;
+        $nnode->language = 'und';
+        $nnode->status = 1;
+        $nnode->promote = 0;
+        $nnode->sticky = 0;
+        $nnode->format = 1;       // Filtered HTML^M
+        $nnode->uid = $user->uid;
+        $nnode = node_submit($nnode);
+        node_save($nnode);
+
+    $rets_bsf_msg ("Email:$sendemail To:$to From:$from Subject:$subject");
 
   if ($sendemail == 'Yes') {
 
-	$to = variable_get('rets_bsf_emailto');
- 	$from = variable_get('rets_bsf_emailfrom');
-	$subject = variable_get('rets_bsf_emailsubject','Hotsheet');
 
   	// ... other function code would be here
 
@@ -284,24 +302,11 @@ global $user;  // place at the top of the function you are calling from
   	// the MIME Mail or HTMLMail modules, rather than doing it
 	// by just setting the Content-Type.
 
+$to = 'hotsheet@oip.net';
+$from = 'dwork@oip.net';
+
   	$message = drupal_mail('rets_bsf', 'hotsheet', $to, user_preferred_language($user), array('body' => $body, 'subject' => $subject, 'headers' => array('Cc' => $header_cc, 'Bcc' => $header_bcc)), $from, TRUE);
   	// You can check $message['result'] to see if the message sent successfully.
    }
 
-   // Now append the hotsheet message to the hotsheet file
-        $nnode = new stdClass();
-        $nnode->title = $subject;
-        $nnode->body['und'][0]['value'] = $msg;
-        $nnode->nid = '';                  // add or update, depending on query for 'nid' above^M
-        $nnode->type = 'hotsheet';   // Your specified content type^M
-        $nnode->created = $time;
-        $nnode->changed = $time;
-        $nnode->language = 'und';
-        $nnode->status = 1;
-        $nnode->promote = 0;
-        $nnode->sticky = 0;
-        $nnode->format = 1;       // Filtered HTML^M
-        $nnode->uid = $user->uid;
-        $nnode = node_submit($nnode);
-        node_save($nnode);
 }

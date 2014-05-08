@@ -17,10 +17,14 @@ $result = $query
   ->propertyCondition('status',1)
   ->execute();
 
+// $interface is "All", we need to process by role. Otherwise, we simply select all the listings as below
+   $interface = variable_get('rets_bsf_interface');
+
 if (!empty($result['user'])) {
   $users = user_load_multiple(array_keys($result['user']));
   foreach ($users as $user) {
-     if (isset($user->roles[5]) || isset($user->roles[6]) ) {    # gold and platinum
+    if ($interface == 'All') {
+      if (isset($user->roles[5]) || isset($user->roles[6]) ) {    # gold and platinum
         # if a specific listing has been selected for this realtor, reflag it
         if (!isset($user->field_rotatinglisting['und'][0]['value']) && !empty($user->field_rotatinglisting['und'][0]['value'])) {
                array_push($listings,$user->field_rotatinglisting['und'][0]['nid']);
@@ -31,6 +35,16 @@ if (!empty($result['user'])) {
  //              print $user->field_lastname['und'][0]['value'];
  //              print "---->Agent is a 'gold' member, but no rotating listing selection was made. Notify the agent<BR>";
             }
+        }
+      }
+    #  select all realtors in this database
+    } else { 
+        # If a specific list has been requestion, we won't rotate.
+        if (!isset($user->field_rotatinglisting['und'][0]['value']) && !empty($user->field_rotatinglisting['und'][0]['value'])) {
+            array_push($listings,$user->field_rotatinglisting['und'][0]['nid']);
+        # Otherwise just load this agent into the selection array & pick all their Active/Pending/Bumpable listings
+        } else { 
+            array_push($agents,$user->field_agentid['und'][0]['value']);
         }
     }
   }
