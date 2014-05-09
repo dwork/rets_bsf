@@ -131,7 +131,7 @@ function rets_bsf_interface() {
 		$diff = 9999;
 	      }
               if (abs($diff) > .001) {
-                $change .= $key. ': ('.$node->{$out}['und'][0][$type].') -> ('. $row[$key] .')';
+                $change .= ' -- ' . $key. ': ('.$node->{$out}['und'][0][$type].') -> ('. $row[$key] .")<BR>\n";
 //	        if (strlen(trim($row[$key])) == 0 || $row[$key] == '0000-00-00 00:00:00') {       // no input row or datetime is empty - delete the node variable
 //		  unset ($node->{$out});
 //	        } else {									  // replace the node value with the input value
