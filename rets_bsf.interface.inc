@@ -49,7 +49,7 @@ function rets_bsf_interface() {
      rets_bsf_msg($select . ': no records found');
   }
   
-
+  if ($result) {
   while ($row = mysqli_fetch_array($result)) {
  
      // Bypass the checking section if we're specific
@@ -199,6 +199,7 @@ function rets_bsf_interface() {
         }
 	watchdog('rets_bsf', 'Listing '.$row['ListingID'] . ' updated $change:('.$change.')');
       }
+    }
   }
 
   // Finish up - send hotsheet email if configurted, and return message if running interactively
