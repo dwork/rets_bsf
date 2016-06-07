@@ -162,7 +162,7 @@ function rets_bsf_loadroles () {
 	    break;
 	}
     }
-    return $role;;
+    return $role;
 }
 
 /**----------------------------------------------------------------------------------- 
@@ -170,9 +170,11 @@ function rets_bsf_loadroles () {
  *  Open the rets bsf "map" file and load up all the fields
  */
 
-function rets_bsf_openrets ($map) {
+function rets_bsf_openrets () {
 
   global $mysqli_link;
+
+  $map = array();
 
   // Open the rets database
   $host = "athena.earthclick.net";
@@ -184,18 +186,27 @@ function rets_bsf_openrets ($map) {
   if(mysqli_connect_error()) {
      $msg = mysqli_connect_error();
      rets_bsf_msg("Connect failed: $msg");
+     $map['Connect Error'] = 'Connect Failed: ' .$msg;
   }
+  rets_bsf_msg("Connection successful to $db on $host");
 
   // Read in "rets_map" and load the $map array
   $select = 'SELECT * FROM bsf_map WHERE fieldoutvalue<>""';
-  $result = mysqli_query($mysqli_link,$select);
-  while ($row = mysqli_fetch_array($result)) {
-    $fld = chop($row['fieldinvalue']);
-    $map[$fld]['out'] = chop($row['fieldoutvalue']);
-    $map[$fld]['type'] = $row['fieldtype'];
-    $map[$fld]['oiptable'] = $row['oiptable'];
-    $map[$fld]['oipfield'] = $row['oipfield'];
-  }
+  if ($result = mysqli_query($mysqli_link,$select)) {
+
+    while ($row = mysqli_fetch_array($result)) {
+      $fld = chop($row['fieldinvalue']);
+      $map[$fld]['out'] = chop($row['fieldoutvalue']);
+      $map[$fld]['type'] = $row['fieldtype'];
+      $map[$fld]['oiptable'] = $row['oiptable'];
+      $map[$fld]['oipfield'] = $row['oipfield'];
+    }
+
+  } else {
+     $msg = 'Unable to open bsf_map, no mapping records retrieved : ' . mysqli_error($mysqli_link);
+     rets_bsf_msg("Connect failed: $msg");
+
+  }  
   mysqli_free_result($result);
   return $map;
 }

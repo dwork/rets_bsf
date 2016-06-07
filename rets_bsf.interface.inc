@@ -3,6 +3,8 @@
 /**-----------------------------------------------------------------------------------
  *  rets_bsf_interface
  *  control the hotsheet interface
+ *
+ *  DCW 11/22/14 "New on OIP" in ad title instead of beds + baths
  */
 
 function rets_bsf_interface() {
@@ -12,12 +14,15 @@ function rets_bsf_interface() {
   $roles = rets_bsf_loadroles();		// $roles[$role] = 1 means its a member
 
   $map = array();
-  $map = rets_bsf_openrets($map);               // Uses global $mysqli_link as resource
+  $map = rets_bsf_openrets();               // Uses global $mysqli_link as resource
   $adds = 0;
   $updates = 0;
   $changes = '';
 
   $count = 0;
+ 
+  // For RMLS - active status are ['Active','Bumpable Buyer']
+     $ActiveStatus = array('Active','Bumpable Buyer');
 
   // If select, retrieve users with agentid's
    $interface = variable_get('rets_bsf_interface');
@@ -49,7 +54,7 @@ function rets_bsf_interface() {
      rets_bsf_msg($select . ': no records found');
   }
   
-  if ($result) {
+
   while ($row = mysqli_fetch_array($result)) {
  
      // Bypass the checking section if we're specific
@@ -69,16 +74,30 @@ function rets_bsf_interface() {
         $row['CoListOfficeID'] = $IsMember['CoListOfficeID'];
 
         // Set the owner of this listing to the first agent who is Gold or Platinum
-        $editable = array ('Gold','Platinum');
+        $editable = array ('Basic','Gold','Platinum');
         $owneruid = 1;							// Admin
         $ownername = 'admin';
+        $Listings = 'Active';
         if (in_array($IsMember['ListAgentType'],$editable)) {
    	   $owneruid = $IsMember['ListAgentUID'];
            $ownername = $IsMember['ListAgentID'];
+           $Listings = 'All';
         } else if (in_array($IsMember['CoListAgentType'],$editable)) {
 	   $owneruid = $IsMember['CoListAgentUID'];
            $ownername = $IsMember['CoListAgentID'];
+           $Listings = 'All';
         } 
+
+        // if Neither of the agents is Gold or Platinum, assign ownership to the "basic" member
+        if ($owneruid == 1) {
+           if (in_array($IsMember['ListAgentType'],['Basic'])) {
+   	      $owneruid = $IsMember['ListAgentUID'];
+              $ownername = $IsMember['ListAgentID'];
+           } else {
+	      $owneruid = $IsMember['CoListAgentUID'];
+              $ownername = $IsMember['CoListAgentID'];
+           } 
+        }
      }
 
      $count++;
@@ -123,6 +142,13 @@ function rets_bsf_interface() {
 	    if ($type == 'tid') {						// translate
 	        $row[$key] = rets_bsf_gettid ('property_type',$row[$key]);
 	    }
+            if ($type == 'datetime') {						// decode if html special characters are encoded 
+		$row[$key] = htmlspecialchars_decode($row[$key]);
+                $row[$key] = str_replace('&#44;', ',', $row[$key]);
+                $row[$key] = substr($row[key],0,10);
+                $type = 'value';
+                $node->{$out}['und'][0]['value'] = $row[$key];
+	    }
 
             if ($node->{$out}['und'][0][$type] <> $row[$key]) {			// changed
 	      if ($type == 'lat' || $type == 'lon') {
@@ -139,8 +165,8 @@ function rets_bsf_interface() {
 //	        }
               }
             }
-	  } else if (strlen($row[$key])<>0 && $row[$key]<>'0000-00-00 00:00:00') {
-              $change .= $key. ': ( -new:' .$out."['und'][0][".$type . '] ) -> ('. $row[$key] .')';
+	  } else if ($type<>'datetime' && strlen($row[$key])<>0 && $row[$key]<>'0000-00-00 00:00:00') {
+              $change .= $key. ': ( -new:' .$out."['und'][0]['".$type . "'] ) -> (". $row[$key] .')';
               $node->{$out}['und'][0][$type] = $row[$key];
           }
 	}
@@ -156,9 +182,9 @@ function rets_bsf_interface() {
   	node_object_prepare($node);
 	$node->title = $row['ListingID'];
         $node->language = 'und';
-	$change = 'Yes';
 
         // Loop through each Drupal map field for the values we're translating
+        $status = 'Active';
         foreach ($map as $key => $value) {
           $out = $value['out'];
           $type = $value['type'];
@@ -172,10 +198,19 @@ function rets_bsf_interface() {
           if (strlen($row[$key]) <> 0 && $row[$key] <> '0000-00-00 00:00:00') {       // no input row or datetime is empty - delete the node variable
              $node->{$out}['und'][0][$type] = $row[$key];
           }
+          if ($key == 'ListingStatus') {
+            $status = $row{$key};
+          }
         }
 
-	$changes .= $row['ListingID'] . " added (1:".$row['ListAgentFullName']." 2:".$row['CoListAgentFullName']. "<BR><BR>\n\n";
-	$adds++;
+        // Output this listing if Gold/Platinum or if status is "Active or Bumpable" (RMLS)
+        if ($Listings=='All' or in_array($status,$ActiveStatus)) {
+	   $change = 'Yes';
+	   $changes .= $row['ListingID'] . " added (1:".$row['ListAgentFullName']." 2:".$row['CoListAgentFullName']. "<BR><BR>\n\n";
+	   $adds++;
+        } else {
+	   $changes .= $row['ListingID'] . " NOT added (1:".$row['ListAgentFullName']." 2:".$row['CoListAgentFullName']. " Status: $status<BR><BR>\n\n";
+        }
       }
     
      if (strlen($change)<>0) {
@@ -199,7 +234,6 @@ function rets_bsf_interface() {
         }
 	watchdog('rets_bsf', 'Listing '.$row['ListingID'] . ' updated $change:('.$change.')');
       }
-    }
   }
 
   // Finish up - send hotsheet email if configurted, and return message if running interactively
@@ -221,10 +255,16 @@ function rets_bsf_prefix ($row) {
   }
 
   // INPUT dates may have be of the format YYYY-MM-DD HH:MM:SS; we need to reformat them to YYYY-MM-DD 00:00:00
-  $row['DateList'] = substr($row['DateList'],0,11) . '00:00:00';
+  $row['DateList'] = substr($row['DateList'],0,10) . ' 00:00:00';
+
+  // Truncate sold terms if it's longer than 20
+   $terms = trim($row['TermsOfSale']);
+   if (strlen($terms) > 20) {
+      $row['TermsOfSale'] = substr($terms,0,18).'..';
+   }
 
   // Also, based on status, clear the unwanted dates
-  $row['DateOffMarket'] = substr($row['DateOffMarket'],0,11) . '00:00:00';
+  $row['DateOffMarket'] = substr($row['DateOffMarket'],0,10) . ' 00:00:00';
   switch ($row['ListingStatus']) {
      case 'Expired':
     	$row['DateCanceled'] = '';
@@ -232,17 +272,17 @@ function rets_bsf_prefix ($row) {
     	$row['DateClose'] = '';
 	break;
      case 'Canceled':
-  	$row['DateCanceled'] = substr($row['DateCanceled'],0,11) . '00:00:00';
+  	$row['DateCanceled'] = substr($row['DateCanceled'],0,10) . ' 00:00:00';
     	$row['DateWithdrawn'] = '';
     	$row['DateClose'] = '';
 	break;
      case 'Withdrawn':
-  	$row['DateWithdrawn'] = substr($row['DateWithdrawn'],0,11) . '00:00:00';
+  	$row['DateWithdrawn'] = substr($row['DateWithdrawn'],0,10) . ' 00:00:00';
     	$row['DateCanceled'] = '';
     	$row['DateClose'] = '';
 	break;
      case 'SOLD':
-  	$row['DateClose'] = substr($row['DateClose'],0,11) . '00:00:00';
+  	$row['DateClose'] = substr($row['DateClose'],0,11) . ' 00:00:00';
     	$row['DateCanceled'] = '';
     	$row['DateWithdrawn'] = '';
 	break;
@@ -252,7 +292,6 @@ function rets_bsf_prefix ($row) {
     	$row['DateClose'] = '';
     	$row['DateOffMarket'] = '';
 	break;
-
      case 'Pending':
     	$row['DateCanceled'] = '';
     	$row['DateWithdrawn'] = '';
@@ -328,6 +367,7 @@ global $changes;
      if (strlen($node->field_acreage['und'][0]['value']) <> 0) {
        $title .= $node->field_acreage['und'][0]['value'] . ' acres ';
      }
+     $title = 'New on OIP';
      $node->field_originaladtitle['und'][0]['value'] = $title;
    }
 
@@ -371,6 +411,24 @@ global $changes;
      default:
        break;
    	}
+
+   if (isset($node->field_soldterms['und'])) {
+      if (strlen($node->field_soldterms['und'][0]['value']) > 20) {
+         $node->field_soldterms['und'][0]['value'] = substr($node->field_soldterms['und'][0]['value'],0,18).'..';
+      }
+   }
+
+   if (isset($node->field_solddate['und'])) {
+	if (substr($node->field_solddate['und'][0]['value'],0,10)=='0000-00-00') {
+	   unset ($node->field_solddate);
+        }
+   }
+   if (isset($node->field_withdrawdate['und']) && substr($node->field_withdrawdate['und'][0]['value'],0,10)=='0000-00-00') {
+	unset ($node->field_withdrawdate);
+   }
+   if (isset($node->field_offmarketdate['und']) && substr($node->field_offmarketdate['und'][0]['value'],0,10)=='0000-00-00') {
+	unset ($node->field_offmarketdate);
+   }
 
    if (isset($node->field_expiredate['und'][0]['value']) && trim($node->field_expiredate['und'][0]['value']) == '') {
 	unset ($node->field_expiredate);

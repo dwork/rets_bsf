@@ -44,7 +44,9 @@ if (!empty($result['user'])) {
             array_push($listings,$user->field_rotatinglisting['und'][0]['nid']);
         # Otherwise just load this agent into the selection array & pick all their Active/Pending/Bumpable listings
         } else { 
-            array_push($agents,$user->field_agentid['und'][0]['value']);
+            if (isset($user->field_agentid['und'])) {
+               array_push($agents,$user->field_agentid['und'][0]['value']);
+            }
         }
     }
   }
