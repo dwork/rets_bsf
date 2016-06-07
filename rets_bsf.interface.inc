@@ -25,20 +25,20 @@ function rets_bsf_interface() {
      $ActiveStatus = array('Active','Bumpable Buyer');
 
   // If select, retrieve users with agentid's
-   $interface = variable_get('rets_bsf_interface');
-   $selectagent='';
-   if ($interface <> 'All') {
-      rets_bsf_msg ($selectagent);
-      $users = entity_load('user');
-      foreach ($users as $user) {
-         if (!empty($user->field_agentid['und']['0']['safe_value'])) {
-            if (strlen($selectagent)<>0) {
-               $selectagent = $selectagent.',';
-            }
-            $selectagent = $selectagent . "'" . $user->field_agentid['und'][0]['safe_value'] . "'";
-         }
-      }
-   }
+  $interface = variable_get('rets_bsf_interface');
+  $selectagent='';
+  if ($interface <> 'All') {
+     rets_bsf_msg ($selectagent);
+     $users = entity_load('user');
+     foreach ($users as $user) {
+        if (!empty($user->field_agentid['und']['0']['safe_value'])) {
+           if (strlen($selectagent)<>0) {
+              $selectagent = $selectagent.',';
+           }
+           $selectagent = $selectagent . "'" . $user->field_agentid['und'][0]['safe_value'] . "'";
+        }
+     }
+  }
 
   // Now, process the records in the "bsf_current" file
   $select = 'SELECT * FROM bsf_current';
@@ -49,11 +49,6 @@ function rets_bsf_interface() {
   if ($result = mysqli_query($mysqli_link,$select)) {
      $num = mysqli_num_rows($result);
      rets_bsf_msg($select . ': recs ' . $num);
-  } else {
-     $num = 0;
-     rets_bsf_msg($select . ': no records found');
-  }
-  
 
   while ($row = mysqli_fetch_array($result)) {
  
@@ -79,11 +74,11 @@ function rets_bsf_interface() {
         $ownername = 'admin';
         $Listings = 'Active';
         if (in_array($IsMember['ListAgentType'],$editable)) {
-   	   $owneruid = $IsMember['ListAgentUID'];
+   	       $owneruid = $IsMember['ListAgentUID'];
            $ownername = $IsMember['ListAgentID'];
            $Listings = 'All';
         } else if (in_array($IsMember['CoListAgentType'],$editable)) {
-	   $owneruid = $IsMember['CoListAgentUID'];
+	       $owneruid = $IsMember['CoListAgentUID'];
            $ownername = $IsMember['CoListAgentID'];
            $Listings = 'All';
         } 
@@ -91,10 +86,10 @@ function rets_bsf_interface() {
         // if Neither of the agents is Gold or Platinum, assign ownership to the "basic" member
         if ($owneruid == 1) {
            if (in_array($IsMember['ListAgentType'],['Basic'])) {
-   	      $owneruid = $IsMember['ListAgentUID'];
+   	          $owneruid = $IsMember['ListAgentUID'];
               $ownername = $IsMember['ListAgentID'];
            } else {
-	      $owneruid = $IsMember['CoListAgentUID'];
+	          $owneruid = $IsMember['CoListAgentUID'];
               $ownername = $IsMember['CoListAgentID'];
            } 
         }
@@ -123,118 +118,124 @@ function rets_bsf_interface() {
       	$node = $entities[$nid];
 	
         // Loop through each Drupal map field for the values we're translating
-	$change = '';
+	    $change = '';
         if ($interface == 'All') {
-           if ($node->uid <> $owneruid) {		// ownership changed
-              $change .= "Owner changed to $ownername";
-           }
+           	if ($node->uid <> $owneruid) {		// ownership changed
+            	$change .= "Owner changed to $ownername";
+        	}
         }
 
-	foreach ($map as $key => $value) {
-	  $out = $value['out'];
-	  $type = $value['type'];
-	  // if the Drupal field is present, figure out if there's an update or not.
-          if (isset($node->{$out}['und'][0][$type])) {
-            if ($type == 'value') {						// decode if html special characters are encoded 
-		$row[$key] = htmlspecialchars_decode($row[$key]);
-                $row[$key] = str_replace('&#44;', ',', $row[$key]);
-	       }
-	    if ($type == 'tid') {						// translate
-	        $row[$key] = rets_bsf_gettid ('property_type',$row[$key]);
-	    }
-            if ($type == 'datetime') {						// decode if html special characters are encoded 
-		$row[$key] = htmlspecialchars_decode($row[$key]);
-                $row[$key] = str_replace('&#44;', ',', $row[$key]);
-                $row[$key] = substr($row[key],0,10);
-                $type = 'value';
-                $node->{$out}['und'][0]['value'] = $row[$key];
-	    }
+		foreach ($map as $key => $value) {
+	 	   	$out = $value['out'];
+	  	   	$type = $value['type'];
+	    	// if the Drupal field is present, figure out if there's an update or not.
+           	if (isset($node->{$out}['und'][0][$type])) {
+              	if ($type == 'value') {						// decode if html special characters are encoded 
+				  	$row[$key] = htmlspecialchars_decode($row[$key]);
+                	$row[$key] = str_replace('&#44;', ',', $row[$key]);
+	       	  	}
+	   	      	if ($type == 'tid') {						// translate
+	        		$row[$key] = rets_bsf_gettid ('property_type',$row[$key]);
+	       	  	}
+              	if ($type == 'datetime') {						// decode if html special characters are encoded 
+				  	$row[$key] = htmlspecialchars_decode($row[$key]);
+                  	$row[$key] = str_replace('&#44;', ',', $row[$key]);
+                  	$row[$key] = substr($row[key],0,10);
+                  	$type = 'value';
+                	$node->{$out}['und'][0]['value'] = $row[$key];
+	    	  	}
 
-            if ($node->{$out}['und'][0][$type] <> $row[$key]) {			// changed
-	      if ($type == 'lat' || $type == 'lon') {
-		$diff = $node->{$out}['und'][0][$type] - $row[$key];
-              } else {
-		$diff = 9999;
-	      }
-              if (abs($diff) > .001) {
-                $change .= ' -- ' . $key. ': ('.$node->{$out}['und'][0][$type].') -> ('. $row[$key] .")<BR>\n";
-//	        if (strlen(trim($row[$key])) == 0 || $row[$key] == '0000-00-00 00:00:00') {       // no input row or datetime is empty - delete the node variable
-//		  unset ($node->{$out});
-//	        } else {									  // replace the node value with the input value
-                  $node->{$out}['und'][0][$type] = $row[$key];
-//	        }
-              }
-            }
-	  } else if ($type<>'datetime' && strlen($row[$key])<>0 && $row[$key]<>'0000-00-00 00:00:00') {
-              $change .= $key. ': ( -new:' .$out."['und'][0]['".$type . "'] ) -> (". $row[$key] .')';
-              $node->{$out}['und'][0][$type] = $row[$key];
-          }
-	}
-	if (strlen($change)<>0) {
-	  $changes .= $row['ListingID'] . " changed *" . $node->field_status['und'][0]['value'] . "*<BR>$change<BR><BR>\n\n";
-          $updates++;
-	}
+             	if ($node->{$out}['und'][0][$type] <> $row[$key]) {			// changed
+	      		 	if ($type == 'lat' || $type == 'lon') {
+						 $diff = $node->{$out}['und'][0][$type] - $row[$key];
+              	 	} else {
+						 $diff = 9999;
+	     		 	}
+              	 	if (abs($diff) > .001) {
+               	     	$change .= ' -- ' . $key. ': ('.$node->{$out}['und'][0][$type].') -> ('. $row[$key] .")<BR>\n";
+//	        			if (strlen(trim($row[$key])) == 0 || $row[$key] == '0000-00-00 00:00:00') {       // no input row or datetime is empty - delete the node variable
+//		  						unset ($node->{$out});
+//	        				} else {									  // replace the node value with the input value
+          			 			$node->{$out}['und'][0][$type] = $row[$key];
+//	        				}
+               	 		}
+           	  		}
+	  	   		} else if ($type<>'datetime' && strlen($row[$key])<>0 && $row[$key]<>'0000-00-00 00:00:00') {
+              		$change .= $key. ': ( -new:' .$out."['und'][0]['".$type . "'] ) -> (". $row[$key] .')';
+              		$node->{$out}['und'][0][$type] = $row[$key];
+           		}
+			}  // foreach
+			if (strlen($change)<>0) {
+	  	   		$changes .= $row['ListingID'] . " changed *" . $node->field_status['und'][0]['value'] . "*<BR>$change<BR><BR>\n\n";
+           		$updates++;
+			}
 
-    } else { 	// Add new node
+		} else { 	// Add new node
 
-       	$node = new stdClass();
-  	$node->type = 'listing';
-  	node_object_prepare($node);
-	$node->title = $row['ListingID'];
-        $node->language = 'und';
+       		$node = new stdClass();
+  		  	$node->type = 'listing';
+  			node_object_prepare($node);
+			$node->title = $row['ListingID'];
+        	$node->language = 'und';
 
-        // Loop through each Drupal map field for the values we're translating
-        $status = 'Active';
-        foreach ($map as $key => $value) {
-          $out = $value['out'];
-          $type = $value['type'];
-          if ($type == 'value') {                                             // decode if html special characters are encoded
-             $row[$key] = htmlspecialchars_decode($row[$key]);
-             $row[$key] = str_replace('&#44;', ',', $row[$key]);
-          }
-	  if ($type == 'tid') {							// translate
-	     $row[$key] = rets_bsf_gettid ('property_type',$row[$key]);
-	  }
-          if (strlen($row[$key]) <> 0 && $row[$key] <> '0000-00-00 00:00:00') {       // no input row or datetime is empty - delete the node variable
-             $node->{$out}['und'][0][$type] = $row[$key];
-          }
-          if ($key == 'ListingStatus') {
-            $status = $row{$key};
-          }
-        }
+        	// Loop through each Drupal map field for the values we're translating
+        	$status = 'Active';
+        	foreach ($map as $key => $value) {
+           		$out = $value['out'];
+           		$type = $value['type'];
+           		if ($type == 'value') {                                             // decode if html special characters are encoded
+              		$row[$key] = htmlspecialchars_decode($row[$key]);
+              		$row[$key] = str_replace('&#44;', ',', $row[$key]);
+           		}
+	  	   		if ($type == 'tid') {							// translate
+	     	  		$row[$key] = rets_bsf_gettid ('property_type',$row[$key]);
+	  	   		}
+           		if (strlen($row[$key]) <> 0 && $row[$key] <> '0000-00-00 00:00:00') {       // no input row or datetime is empty - delete the node variable
+              	  	$node->{$out}['und'][0][$type] = $row[$key];
+           	 	}
+           		if ($key == 'ListingStatus') {
+              		$status = $row{$key};
+           		}
+        	}  // foreach
 
-        // Output this listing if Gold/Platinum or if status is "Active or Bumpable" (RMLS)
-        if ($Listings=='All' or in_array($status,$ActiveStatus)) {
-	   $change = 'Yes';
-	   $changes .= $row['ListingID'] . " added (1:".$row['ListAgentFullName']." 2:".$row['CoListAgentFullName']. "<BR><BR>\n\n";
-	   $adds++;
-        } else {
-	   $changes .= $row['ListingID'] . " NOT added (1:".$row['ListAgentFullName']." 2:".$row['CoListAgentFullName']. " Status: $status<BR><BR>\n\n";
-        }
-      }
+        	// Output this listing if Gold/Platinum or if status is "Active or Bumpable" (RMLS)
+        	if ($Listings=='All' or in_array($status,$ActiveStatus)) {
+				$change = 'Yes';
+	   	 		$changes .= $row['ListingID'] . " added (1:".$row['ListAgentFullName']." 2:".$row['CoListAgentFullName']. "<BR><BR>\n\n";
+	   	 		$adds++;
+  		  	} else {
+	   	 		$changes .= $row['ListingID'] . " NOT added (1:".$row['ListAgentFullName']." 2:".$row['CoListAgentFullName']. " Status: $status<BR><BR>\n\n";
+        	}
+    	}
     
-     if (strlen($change)<>0) {
+    	if (strlen($change)<>0) {
 
-	if (isset($node->field_expiredate['und'][0]['value'])) {
-	//	watchdog('rets_bsf', 'Listing '.$row['ListingID'] . ' Before '.$node->field_expiredate['und'][0]['value']);
-	} else {
-	//	watchdog('rets_bsf', 'Listing '.$row['ListingID'] . ' undefined expiredate');
-	}
+			if (isset($node->field_expiredate['und'][0]['value'])) {
+				//	watchdog('rets_bsf', 'Listing '.$row['ListingID'] . ' Before '.$node->field_expiredate['und'][0]['value']);
+			} else {
+				//	watchdog('rets_bsf', 'Listing '.$row['ListingID'] . ' undefined expiredate');
+			}
 
-      	// fix any problem fields, or make adjustments as necessary
-      	$node = rets_bsf_postfix($node);
+      		// fix any problem fields, or make adjustments as necessary
+      		$node = rets_bsf_postfix($node);
 
-      	// update or add the node now
-      	$node = node_submit($node);
-        if ($interface == 'All') {
-           $node->uid = $owneruid;			// this goes here, because node_submit changes the owner back to 1 ("admin")
-        }
-      	if ($node->validated) {
-       	  node_save($node);
-        }
-	watchdog('rets_bsf', 'Listing '.$row['ListingID'] . ' updated $change:('.$change.')');
-      }
+      		// update or add the node now
+      		$node = node_submit($node);
+        	if ($interface == 'All') {
+           		$node->uid = $owneruid;			// this goes here, because node_submit changes the owner back to 1 ("admin")
+        	}
+      		if ($node->validated) {
+       	  		node_save($node);
+        	}
+			watchdog('rets_bsf', 'Listing '.$row['ListingID'] . ' updated $change:('.$change.')');
+    	}
+ 	}
+
+  } else {
+     $num = 0;
+     rets_bsf_msg($select . ': no records found');
   }
+  
 
   // Finish up - send hotsheet email if configurted, and return message if running interactively
   $msg = $changes . "RETS BSF interface successful: $adds adds, $updates updates";
@@ -436,4 +437,3 @@ global $changes;
 
   return $node;
 }
-
