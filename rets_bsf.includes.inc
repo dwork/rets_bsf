@@ -62,6 +62,7 @@ function rets_bsf_gettid ($vname, $name) {
 /**----------------------------------------------------------------------------------- 
  *  rets_bsf_ismember
  *  Interface only listings that belong to OIP members
+ *  DCW 6/6/2016 Get the team member's info if necessary
  */
 
 function rets_bsf_ismember ($roles, $agent1, $agency1, $agent2, $agency2) {
@@ -112,6 +113,13 @@ function rets_bsf_ismember ($roles, $agent1, $agency1, $agent2, $agency2) {
     $IsMember['CoListOfficeID'] = '';
     $IsMember['CoListAgentType'] = '';
     $IsMember['CoListAgentUID'] = '';
+	$TeamMember = rets_bsf_get_teammember($roles,$IsMember['ListAgentUID']);
+	if ($TeamMember<>'No') {
+	    $IsMember['CoListAgentID'] = $TeamMember[0];
+	    $IsMember['CoListOfficeID'] = $TeamMember[1];
+	    $IsMember['CoListAgentType'] = $TeamMember[2];
+	    $IsMember['CoListAgentUID'] = $TeamMember[3];
+	}
   }
  return $IsMember;
  
@@ -130,11 +138,34 @@ function rets_bsf_ismember_agent ($roles, $agent) {
       $rkey = $keys[0];
       foreach ($napps[$rkey]->roles as $key => $value) {
         if (isset($roles[$key])) {
-            return array($roles[$key],$napps[$rkey]->uid);
-        }
+           return array($roles[$key],$napps[$rkey]->uid);
+        } 
       }
    }
    return 'No';
+}
+
+function rets_bsf_get_teammember($roles,$uid) {
+	if (!empty($uid) and $uid<>0) {
+
+		$user = user_load($uid);
+		if (!isset($user->field_teammate['und'][0]['target_id'])) {
+			return 'No';
+		}
+		$user2uid = $user->field_teammate['und'][0]['target_id'];
+		if (!empty($user2uid)) {
+			$user2 = user_load ($user2uid);
+			$wrapper2 = entity_metadata_wrapper('user',$user2);
+			$agent2 = $wrapper2->field_agentid->value();
+			$agency2 = $wrapper2->field_agency->field_offid->value();
+			$ismember2 = rets_bsf_ismember_agent ($roles, $agent2);
+			watchdog('Team Member',$agent2 . ' ' . $agency2);
+			if ($ismember2 <> 'No') {
+				return array($agent2,$agency2,$ismember2[0],$ismember2[1]);
+			}
+		}
+	}
+	return 'No';
 }
 
 /**----------------------------------------------------------------------------------- 
