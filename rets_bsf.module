@@ -52,7 +52,7 @@ function rets_bsf_form($form, &$form_state) {
     '#title' => t('RETS BSF "Cron" status information'),
   );
   $form['status']['intro'] = array(
-    '#markup' => '<div>' . t('This job controls how often the RETS BSF job is run. You can run this job each time a new agent is added, or adjust the frequency. The frequency of runs is dependent upon OIPs run frequency, which is currently set to once a day. If you have administrative privileges you can run cron from this page and see the results.') . '</div>',
+    '#markup' => '<div>' . t('This job controls how often the RETS BSF job is run. You can run this job each time a new agent is added, or adjust the frequency. The frequency of runs is dependent upon the Broker Specific Feed (BSF) run frequency, which is currently set to six times a day. If you have administrative privileges you can run cron from this page and see the results.') . '</div>',
   );
   $form['status']['last'] = array(
     '#markup' => '<div>' . t('rets_bsf_cron() will next execute the first time cron runs after %time (%seconds seconds from now)' . '</div>',
