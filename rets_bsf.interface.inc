@@ -53,6 +53,7 @@ function rets_bsf_interface() {
   while ($row = mysqli_fetch_array($result)) {
  
      // Bypass the checking section if we're specific
+	 $Listings='All';
      if ($interface == 'All') {
 
         // Check to see if one or more of the INPUT agents are OIP members
