@@ -351,27 +351,36 @@ global $changes;
      }
    }
 
-   // Fix the original title
-   $title = '';
-   $fixit = 'N';
-   if (!isset($node->field_originaladtitle['und'][0]['value'])) {
-     $fixit = 'Y';
-   } else if (strlen($node->field_originaladtitle['und'][0]['value']) == 0) {
-     $fixit = 'Y';
-   }
-   if ($fixit = 'Y') {
-     if (strlen($node->field_beds['und'][0]['value']) <> 0) {
-       $title .= $node->field_beds['und'][0]['value'] . ' bed ';
-     }
-     if (strlen($node->field_baths['und'][0]['value']) <> 0) {
-       $title .= $node->field_baths['und'][0]['value'] . ' baths ';
-     }
-     if (strlen($node->field_acreage['und'][0]['value']) <> 0) {
-       $title .= $node->field_acreage['und'][0]['value'] . ' acres ';
-     }
-     $title = 'New on OIP';
-     $node->field_originaladtitle['und'][0]['value'] = $title;
-   }
+   	// Fix the original title
+   	$title = '';
+   	$fixit = 'N';
+   	if (!isset($node->field_originaladtitle['und'][0]['value'])) {
+     	$fixit = 'Y';
+   	} else if (strlen($node->field_originaladtitle['und'][0]['value']) == 0) {
+     	$fixit = 'Y';
+   	}
+   	if ($Listings<>'All') {
+	  	$fixit = 'Y';
+	}
+	
+   	if ($fixit = 'Y') {
+    	if (strlen($node->field_beds['und'][0]['value']) <> 0) {
+       		$title .= $node->field_beds['und'][0]['value'] . ' bed ';
+    	}
+    	if (strlen($node->field_baths['und'][0]['value']) <> 0) {
+       		$title .= $node->field_baths['und'][0]['value'] . ' baths ';
+    	}
+    	if (strlen($node->field_acreage['und'][0]['value']) <> 0) {
+       		$title .= $node->field_acreage['und'][0]['value'] . ' acres ';
+    	}
+    	if (strlen($title) == 0) {
+			$title = 'New Listing';
+		}
+  		$node->field_originaladtitle['und'][0]['value'] = $title;
+   	} else {
+	 	$title = 'New on OIP';
+     	$node->field_originaladtitle['und'][0]['value'] = $title;
+   	}
 
    // Fix the override title
    if (!isset($node->field_adtitle['und'][0]['value'])) {
