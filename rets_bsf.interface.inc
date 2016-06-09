@@ -413,13 +413,13 @@ global $changes;
        break;
    	}
 
-   if (isset($node->field_soldterms['und'])) {
+   if (isset($node->field_soldterms['und'][0]['value'])) {
       if (strlen($node->field_soldterms['und'][0]['value']) > 20) {
          $node->field_soldterms['und'][0]['value'] = substr($node->field_soldterms['und'][0]['value'],0,18).'..';
       }
    }
 
-   if (isset($node->field_solddate['und'])) {
+   if (isset($node->field_solddate['und'][0]['value'])) {
 	if (substr($node->field_solddate['und'][0]['value'],0,10)=='0000-00-00') {
 	   unset ($node->field_solddate);
         }
