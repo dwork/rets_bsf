@@ -331,7 +331,7 @@ function rets_bsf_prefix ($row) {
  */
 
 function rets_bsf_postfix ($node) {
-global $changes;
+global $changes,$Listings;
 
    // Source of data
    $node->source['und'][0]['value'] = 'MLS';
