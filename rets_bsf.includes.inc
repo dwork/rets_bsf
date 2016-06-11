@@ -191,6 +191,9 @@ function rets_bsf_loadroles () {
           case ('team membership') :
             $role[$key] = 'Team';
 	    break;
+		case ('Agent') :						// agent sites only have "agents"
+            	$role[$key] = 'Agent';
+	    break;
 	}
     }
     return $role;
