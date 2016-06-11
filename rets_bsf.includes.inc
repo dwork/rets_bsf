@@ -159,7 +159,6 @@ function rets_bsf_get_teammember($roles,$uid) {
 			$agent2 = $wrapper2->field_agentid->value();
 			$agency2 = $wrapper2->field_agency->field_offid->value();
 			$ismember2 = rets_bsf_ismember_agent ($roles, $agent2);
-			watchdog('Team Member',$agent2 . ' ' . $agency2);
 			if ($ismember2 <> 'No') {
 				return array($agent2,$agency2,$ismember2[0],$ismember2[1]);
 			}
