@@ -12,6 +12,7 @@ function rets_bsf_interface() {
   global $mysqli_link;
 
   $roles = rets_bsf_loadroles();		// $roles[$role] = 1 means its a member
+  $editable = array ('Basic','Gold','Platinum','Agent');   // Listing owner
 
   $map = array();
   $map = rets_bsf_openrets();               // Uses global $mysqli_link as resource
@@ -70,8 +71,7 @@ function rets_bsf_interface() {
         $row['CoListOfficeID'] = $IsMember['CoListOfficeID'];
 
         // Set the owner of this listing to the first agent who is Gold or Platinum
-        $editable = array ('Basic','Gold','Platinum');
-        $owneruid = 1;							// Admin
+         $owneruid = 1;							// Admin
         $ownername = 'admin';
         $Listings = 'Active';
         if (in_array($IsMember['ListAgentType'],$editable)) {
