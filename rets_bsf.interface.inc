@@ -56,7 +56,6 @@ echo $num;
  
      // Bypass the checking section if we're specific
 	 $Listings='All';
-     if ($interface == 'All') {
 
         // Check to see if one or more of the INPUT agents are OIP members
         $IsMember = rets_bsf_ismember ($roles, $row['ListAgentID'], $row['ListOfficeID'], $row['CoListAgentID'], $row['CoListOfficeID']);
@@ -70,9 +69,6 @@ echo $num;
         $row['ListOfficeID'] = $IsMember['ListOfficeID'];
         $row['CoListAgentID'] = $IsMember['CoListAgentID'];
         $row['CoListOfficeID'] = $IsMember['CoListOfficeID'];
-     dpm($row);
-	watchdog('Debug Listings',$IsMember['ListAgentID'].':'.$IsMember['ListOfficeID'].':'.$IsMember['CoListAgentID'].':'.$IsMember['CoListOfficeID']);
-	return;
 	
         // Set the owner of this listing to the first agent who is Gold or Platinum
          $owneruid = 1;							// Admin
@@ -98,7 +94,6 @@ echo $num;
               $ownername = $IsMember['CoListAgentID'];
            } 
         }
-     }
 
      $count++;
 
@@ -243,7 +238,7 @@ echo $num;
   
 
   // Finish up - send hotsheet email if configurted, and return message if running interactively
-  $msg = $changes . "RETS BSF interface successful: $adds adds, $updates updates";
+  $msg = $changes . "RETS BSF interface successful: $count processed, $adds adds, $updates updates";
   rets_bsf_msg ($msg);
   rets_bsf_hotsheet ($msg);
 }
