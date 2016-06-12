@@ -50,6 +50,7 @@ function rets_bsf_interface() {
   if ($result = mysqli_query($mysqli_link,$select)) {
      $num = mysqli_num_rows($result);
      rets_bsf_msg($select . ': recs ' . $num);
+echo $num;
 
   while ($row = mysqli_fetch_array($result)) {
  
@@ -69,7 +70,10 @@ function rets_bsf_interface() {
         $row['ListOfficeID'] = $IsMember['ListOfficeID'];
         $row['CoListAgentID'] = $IsMember['CoListAgentID'];
         $row['CoListOfficeID'] = $IsMember['CoListOfficeID'];
-
+     dpm($row);
+	watchdog('Debug Listings',$IsMember['ListAgentID'].':'.$IsMember['ListOfficeID'].':'.$IsMember['CoListAgentID'].':'.$IsMember['CoListOfficeID']);
+	return;
+	
         // Set the owner of this listing to the first agent who is Gold or Platinum
          $owneruid = 1;							// Admin
         $ownername = 'admin';
