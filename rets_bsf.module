@@ -109,6 +109,7 @@ function rets_bsf_form($form, &$form_state) {
     '#options' => array(
       'All' => t('All'),
       'Specific' => t('Specific'),
+	  'IDX' => t('IDX'),
       ),
     );
   }
